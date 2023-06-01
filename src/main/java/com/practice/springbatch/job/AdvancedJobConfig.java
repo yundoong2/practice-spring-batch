@@ -46,6 +46,12 @@ public class AdvancedJobConfig {
                 .build();
     }
 
+    /**
+     * Job이 실행되기 전과 후의 상태를 확인할 수 있는 JobExecutionListener
+     * @return JobExecutionListener {@link JobExecutionListener}
+     * @author cyh68
+     * @since 2023-06-01
+     **/
     @JobScope
     @Bean
     public JobExecutionListener jobExecutionListener() {
@@ -66,13 +72,39 @@ public class AdvancedJobConfig {
 
     @JobScope
     @Bean
-    public Step advancedStep(Tasklet advancedTasklet) {
+    public Step advancedStep(StepExecutionListener stepExecutionListener, Tasklet advancedTasklet) {
         return stepBuilderFactory.get("advancedStep")
+                .listener(stepExecutionListener)
                 .tasklet(advancedTasklet)
                 .build();
     }
 
-    
+    /**
+     * Step이 실행되기 전과 후의 상태를 확인할 수 있는 StepExecutionListener
+     * <p>
+     * 로깅 용도로는 사용하지 않으며, 특별히 처리해야할 상황이 있을 때 사용한다.
+     * @return StepExecutionListener {@link StepExecutionListener}
+     * @author cyh68
+     * @since 2023-06-01
+     * @throws
+     **/
+    @StepScope
+    @Bean
+    public StepExecutionListener stepExecutionListener() {
+        return new StepExecutionListener() {
+            @Override
+            public void beforeStep(StepExecution stepExecution) {
+                log.info("[StepExecutionListener#beforeStep] stepExecution is " + stepExecution.getStatus());
+            }
+
+            @Override
+            public ExitStatus afterStep(StepExecution stepExecution) {
+                log.info("[StepExecutionListener#afterStep] stepExecution is " + stepExecution.getStatus());
+                return stepExecution.getExitStatus();
+            }
+        };
+    }
+
     /**
      * Step에서 수행될 Tasklet 정의
      * <p>
